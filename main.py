@@ -1,5 +1,9 @@
+from menu import Menu
+
 def main():
-  menu()
+  menu = Menu()
+  menu.show()
+
 
 def menu():
   pass

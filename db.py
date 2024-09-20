@@ -1,3 +1,3 @@
 from sqlalchemy import create_engine
 
-engine = create_engine("sqlite+pysqlite://", echo=True)
+engine = create_engine("sqlite+pysqlite:///lockbox.db")
