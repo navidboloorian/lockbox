@@ -24,4 +24,5 @@ class Entry(Base):
     UniqueConstraint('email', 'service', name='unique_email_service'),
   )
 
-Base.metadata.create_all(engine)
+def init_models(engine=engine):
+  Base.metadata.create_all(engine)
