@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import String, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from db import engine
@@ -19,9 +20,11 @@ class Entry(Base):
   service: Mapped[str]
   email: Mapped[str]
   password: Mapped[str]
+  alias: Mapped[Optional[str]]
   
   __table_args__ = (
     UniqueConstraint('email', 'service', name='unique_email_service'),
+    UniqueConstraint('alias', name="unique_alias")
   )
 
 def init_models(engine=engine):
