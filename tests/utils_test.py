@@ -20,4 +20,4 @@ def test_encrypt_password(key_pair):
 def test_decrypt_password(key_pair):
   private_key_string, public_key_string = key_pair
   encrypted_password = encrypt_password("testing", public_key_string)
-  assert decrypt_password(private_key_string, encrypted_password) == "testing"
+  assert decrypt_password(encrypted_password, private_key_string) == "testing"
