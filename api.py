@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from db import engine
@@ -77,3 +77,25 @@ def get_entry(field, value, engine=engine):
       query = select(Entry).where(Entry.id == value)
 
     return session.execute(query).scalars().all()
+  
+def delete_entry(field, value, engine=engine):
+  with Session(engine) as session:
+    if field == QueryField.service:
+      if len(get_entry(field, value)) <= 1: 
+        query = delete(Entry).where(Entry.service == value)
+      else:
+        return 2
+    elif field == QueryField.alias:
+      query = delete(Entry).where(Entry.alias == value)
+    elif field == QueryField.email:
+      if len(get_entry(field, value)) <= 1: 
+        query = delete(Entry).where(Entry.email == value)
+      else:
+        return 2
+    elif field == QueryField.id:
+      query = delete(Entry).where(Entry.id == value)
+
+    affected_rows = session.execute(query).rowcount
+    session.commit()
+
+    return affected_rows

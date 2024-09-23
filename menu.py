@@ -37,6 +37,8 @@ class Menu:
           self.generate_password()
         case 2:
           self.retrieve_password()
+        case 4:
+          self.delete_entry()
         case _:
           print("invalid choice")
 
@@ -71,6 +73,66 @@ class Menu:
 
     input("\nPress ENTER to continue: ")
 
+  def replace_password(self):
+    print(
+"""
+Update entry by...
+1. service
+2. alias
+3. email
+"""
+    )
+
+  def delete_entry(self):
+    print(
+"""
+Delete entry by...
+1. service
+2. alias
+3. email
+"""
+    )
+
+    choice = input("Choice: ")
+
+    while (not choice.isdigit() or not int(choice) in range(4)):
+      print("\nInput must be a number between 1 and 3.\n")
+      choice = input("Choice: ")
+
+    query_field = QueryField(int(choice))
+
+    if (query_field == QueryField.service):
+      value = input("Service: ")
+    elif (query_field == QueryField.alias):
+      value = input ("Alias: ")
+    elif (query_field == QueryField.email):
+      value = input ("Email: ")
+
+    affected_rows = api.delete_entry(query_field, value)
+    
+    if affected_rows == 0:
+      print("\nThere are no entries matching those parameters...")
+    elif affected_rows == 1:
+      print("\nEntry successfully deleted!")
+    else:
+      print("\nThere is more than one result, select the one you'd like: ")
+
+      result = api.get_entry(query_field, value)
+
+      for i in range(len(result)):
+        print(f"\n{i + 1}.\nService: {result[i].service}\nAlias: {result[i].alias}\nEmail: {result[i].email}\nPassword: {utils.decrypt_password(result[i].password)}")
+
+      value = input("\nChoice: ")
+
+      while (not value.isdigit() or not int(value) - 1 in range(len(result))):
+        print(f"\nInput must be a number between {1} and {len(result)}.\n")
+        value = input("\nChoice: ")
+
+      api.delete_entry(QueryField.id, result[int(value) - 1].id)
+      print("\nEntry successfully deleted!")
+    
+    input("\nPress ENTER to continue: ")
+
   def retrieve_password(self):
     print(
 """
@@ -79,7 +141,7 @@ Retrieve by...
 2. alias
 3. email
 """
-      )
+    )
 
     choice = input("Choice: ")
 
