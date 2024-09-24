@@ -25,18 +25,24 @@ class Menu:
 """
 1. Generate new password
 2. Retrieve password
-3. Replace password
+3. Regenerate password
 4. Delete password
 """
       )
 
-      choice = int(input("Choice: "))
+      choice = input("Choice: ")
 
-      match choice:
+      while (not choice.isdigit() or not int(choice) in range(1, 5)):
+        print(f"\nChoice must be a number between 1 and 4.")
+        choice = input("\nChoice: ")
+
+      match int(choice):
         case 1:
           self.generate_password()
         case 2:
           self.retrieve_password()
+        case 3:
+          self.regenerate_password()
         case 4:
           self.delete_entry()
         case _:
@@ -59,7 +65,7 @@ class Menu:
     password_length = input("Password length (leave blank for 32): ")
 
     while (len(password_length) and not password_length.isdigit()):
-      print("Password lenght must be a number")
+      print("Password length must be a number")
       password_length = input("Password length (leave blank for 32): ")
 
     password = utils.generate_password(int(password_length) if password_length else 32)
@@ -73,7 +79,7 @@ class Menu:
 
     input("\nPress ENTER to continue: ")
 
-  def replace_password(self):
+  def regenerate_password(self):
     print(
 """
 Update entry by...
@@ -82,6 +88,55 @@ Update entry by...
 3. email
 """
     )
+
+    choice = input("Choice: ")
+
+    while (not choice.isdigit() or not int(choice) in range(1, 4)):
+      print("\nInput must be a number between 1 and 3.\n")
+      choice = input("Choice: ")
+
+    query_field = QueryField(int(choice))
+
+    if (query_field == QueryField.service):
+      value = input("Service: ")
+    elif (query_field == QueryField.alias):
+      value = input ("Alias: ")
+    elif (query_field == QueryField.email):
+      value = input ("Email: ")
+
+    password_length = input("Password length (leave blank for 32): ")
+
+    while (len(password_length) and not password_length.isdigit()):
+      print("Password length must be a number")
+      password_length = input("Password length (leave blank for 32): ")
+
+    password = utils.generate_password(int(password_length) if password_length else 32)
+    encrypted_password = utils.encrypt_password(password)
+    
+    affected_rows = api.update_entry(query_field, value, encrypted_password)
+    
+    if affected_rows == 0:
+      print("\nThere are no entries matching those parameters...")
+    elif affected_rows == 1:
+      print(f"\nYour password has been updated to: {password}, it's been copied to your clipboard!")
+    else:
+      print("\nThere is more than one result, select the one you'd like: ")
+
+      result = api.get_entry(query_field, value)
+
+      for i in range(len(result)):
+        print(f"\n{i + 1}.\nService: {result[i].service}\nAlias: {result[i].alias}\nEmail: {result[i].email}\nPassword: {utils.decrypt_password(result[i].password)}")
+
+      value = input("\nChoice: ")
+
+      while (not value.isdigit() or not int(value) in range(1, len(result) + 1)):
+        print(f"\nInput must be a number between 1 and {len(result)}.\n")
+        value = input("\nChoice: ")
+
+      api.update_entry(QueryField.id, result[int(value) - 1].id, encrypted_password)
+      print(f"\nYour password has been updated to: {password}, it's been copied to your clipboard!")
+
+    input("\nPress ENTER to continue: ")
 
   def delete_entry(self):
     print(
@@ -95,7 +150,7 @@ Delete entry by...
 
     choice = input("Choice: ")
 
-    while (not choice.isdigit() or not int(choice) in range(4)):
+    while (not choice.isdigit() or not int(choice) in range(1, 4)):
       print("\nInput must be a number between 1 and 3.\n")
       choice = input("Choice: ")
 
@@ -124,8 +179,8 @@ Delete entry by...
 
       value = input("\nChoice: ")
 
-      while (not value.isdigit() or not int(value) - 1 in range(len(result))):
-        print(f"\nInput must be a number between {1} and {len(result)}.\n")
+      while (not value.isdigit() or not int(value) in range(1, len(result) + 1)):
+        print(f"\nInput must be a number between 1 and {len(result)}.\n")
         value = input("\nChoice: ")
 
       api.delete_entry(QueryField.id, result[int(value) - 1].id)
@@ -145,7 +200,7 @@ Retrieve by...
 
     choice = input("Choice: ")
 
-    while (not choice.isdigit() or not int(choice) in range(4)):
+    while (not choice.isdigit() or not int(choice) in range(1, 4)):
       print("\nInput must be a number between 1 and 3.\n")
       choice = input("Choice: ")
 
@@ -173,8 +228,8 @@ Retrieve by...
 
       value = input("\nChoice: ")
 
-      while (not value.isdigit() or not int(value) - 1 in range(len(result))):
-        print(f"\nInput must be a number between {1} and {len(result)}.\n")
+      while (not value.isdigit() or not int(value) in range(1, len(result) + 1)):
+        print(f"\nInput must be a number between 1 and {len(result)}.\n")
         value = input("\nChoice: ")
 
       result = api.get_entry(QueryField.id, result[int(value) - 1].id)

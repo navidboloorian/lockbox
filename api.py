@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from db import engine
@@ -33,11 +33,38 @@ def is_unique_service_email(service, email):
     return len(result) == 0
   
 def is_unique_alias(alias):
+  if alias == None: return True
+
   with Session(engine) as session:
     query = select(Entry).where(Entry.alias == alias)
     result = session.execute(query).scalars().all()
 
+    print(result)
+
     return len(result) == 0
+  
+def update_entry(field, value, password, engine=engine):
+  with Session(engine) as session:
+    if field == QueryField.service:
+      if len(get_entry(field, value)) <= 1: 
+        query = update(Entry).where(Entry.service == value).values(password=password)
+      else:
+        return 2
+    elif field == QueryField.alias:
+      query = update(Entry).where(Entry.alias == value).values(password=password)
+    elif field == QueryField.email:
+      if len(get_entry(field, value)) <= 1: 
+        query = update(Entry).where(Entry.email == value).values(password=password)
+      else:
+        return 2
+    elif field == QueryField.id:
+        query = update(Entry).where(Entry.id == value).values(password=password)
+
+    affected_rows = session.execute(query).rowcount
+    session.commit()
+
+    return affected_rows
+
 
 def create_entry(service, email, password, alias, engine=engine):
   with Session(engine) as session:
