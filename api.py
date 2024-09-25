@@ -5,6 +5,13 @@ from db import engine
 from models import User, Entry
 from globals import QueryField
 
+query_map = {
+  QueryField.service: Entry.service,
+  QueryField.alias: Entry.alias,
+  QueryField.email: Entry.email,
+  QueryField.id: Entry.id
+}
+
 # engine argument is used for testing
 def create_user(password, public_key, engine=engine):
   with Session(engine) as session:
@@ -38,8 +45,6 @@ def is_unique_alias(alias):
   with Session(engine) as session:
     query = select(Entry).where(Entry.alias == alias)
     result = session.execute(query).scalars().all()
-
-    print(result)
 
     return len(result) == 0
   
@@ -94,14 +99,7 @@ def create_entry(service, email, password, alias, engine=engine):
 
 def get_entry(field, value, engine=engine):
   with Session(engine) as session:
-    if field == QueryField.service:
-      query = select(Entry).where(Entry.service == value)
-    elif field == QueryField.alias:
-      query = select(Entry).where(Entry.alias == value)
-    elif field == QueryField.email:
-      query = select(Entry).where(Entry.email == value)
-    elif field == QueryField.id:
-      query = select(Entry).where(Entry.id == value)
+    query = select(Entry).where(query_map[field] == value)
 
     return session.execute(query).scalars().all()
   
