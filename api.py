@@ -32,21 +32,33 @@ def get_public_key(engine=engine):
     query = select(User)
     return session.execute(query).scalar_one().public_key
   
-def is_unique_service_email(service, email):
-  with Session(engine) as session:
-    query = select(Entry).where((Entry.service == service) & (Entry.email == email))
-    result = session.execute(query).scalars().all()
+def check_unique(alias, email, service, engine=engine):
+  unique_alias = False
+  unique_service_email = False
 
-    return len(result) == 0
-  
-def is_unique_alias(alias):
-  if alias == None: return True
+  if alias == None: unique_alias = True
 
   with Session(engine) as session:
-    query = select(Entry).where(Entry.alias == alias)
-    result = session.execute(query).scalars().all()
+    alias_query = select(Entry).where(Entry.alias == alias)
+    service_email_query = select(Entry).where((Entry.service == service) & (Entry.email == email))
 
-    return len(result) == 0
+    if not unique_alias: 
+      unique_alias = session.execute(alias_query).scalars().all() == 0
+
+    unique_service_email = session.execute(service_email_query).scalars().all() == 0
+
+    # both are unique
+    if unique_alias and unique_service_email:
+      return 1
+    # alias is unique but service and email aren't
+    elif unique_alias:
+      return 2
+    # service and email are unique but alias isn't
+    elif unique_service_email:
+      return 3
+    # neither are unique
+    else:
+      return 4
   
 def update_entry(field, value, password, engine=engine):
   with Session(engine) as session:
@@ -72,6 +84,18 @@ def update_entry(field, value, password, engine=engine):
 
 
 def create_entry(service, email, password, alias, engine=engine):
+  unique_status = check_unique(alias, email, service)
+
+  if unique_status == 2:
+    print("\nAn entry with that email and service already exists.")
+  elif unique_status == 3:
+    print("\nAn entry with that alias already exists")
+  elif unique_status == 4:
+    print("\nAn entry with that alias, email, and service already exists.")
+
+  if unique_status != 1:
+    return False
+
   with Session(engine) as session:
     entry = Entry(
       service=service,
@@ -79,14 +103,6 @@ def create_entry(service, email, password, alias, engine=engine):
       email=email,
       alias=alias,
     )
-
-    if not is_unique_service_email(service, email):
-      print("\nAn entry with that email and service already exists.")
-      return False
-    
-    if not is_unique_alias(alias):
-      print("\nAn entry with that alias already exists.")
-      return False
 
     try:
       session.add(entry)
